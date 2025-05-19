@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assignment Deadline Timer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: sans-serif;
+            background-color: #f7fafc; /* Light gray background */
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* Align items to the top */
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 600px; /* Max width for better readability */
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #2d3748; /* Dark gray text */
+        }
+        .form-group input[type="text"],
+        .form-group input[type="date"],
+        .form-group input[type="time"],
+        .form-group select { /* Added select to styling */
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #e2e8f0; /* Light border */
+            border-radius: 4px;
+            box-sizing: border-box; /* Include padding in width */
+        }
+        .btn-primary {
+            background-color: #4299e1; /* Blue */
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+        .btn-primary:hover {
+            background-color: #3182ce; /* Darker blue on hover */
+        }
+        .timer-list {
+            margin-top: 20px;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 20px;
+        }
+        .timer-item {
+            background-color: #ebf8ff; /* Light blue background */
+            border: 1px solid #bee3f8; /* Blue border */
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .timer-details {
+            flex-grow: 1;
+            margin-right: 10px;
+        }
+        .timer-details h3 {
+            margin: 0 0 5px 0;
+            font-size: 18px;
+            color: #2b6cb0; /* Darker blue */
+        }
+        .timer-details p {
+            margin: 0;
+            font-size: 14px;
+            color: #2d3748; /* Dark gray */
+        }
+         .timer-details .time-remaining {
+            font-weight: bold;
+            color: #c53030; /* Red for countdown */
+         }
+        .btn-remove {
+            background-color: #e53e3e; /* Red */
+            color: white;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s ease;
+        }
+        .btn-remove:hover {
+            background-color: #c53030; /* Darker red on hover */
+        }
+        .alarm-controls {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #fff5f5; /* Light red background */
+            border: 1px solid #fed7d7; /* Red border */
+            border-radius: 4px;
+            text-align: center;
+            display: none; /* Initially hidden */
+        }
+        .alarm-controls button {
+            margin: 0 5px;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn-snooze {
+            background-color: #f6e05e; /* Yellow */
+            color: #2d3748; /* Dark gray */
+            transition: background-color 0.3s ease;
+        }
+        .btn-snooze:hover {
+            background-color: #ecc94b; /* Darker yellow */
+        }
+        .btn-stop {
+            background-color: #fc8181; /* Light red */
+            color: white;
+            transition: background-color 0.3s ease;
+        }
+        .btn-stop:hover {
+            background-color: #e53e3e; /* Darker red */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-2xl font-bold mb-6 text-center text-gray-800">Assignment Deadline Timer</h1>
+
+        <div class="form-group">
+            <label for="assignmentName">Assignment Name:</label>
+            <input type="text" id="assignmentName" placeholder="e.g., Math Homework Chapter 5">
+        </div>
+
+        <div class="form-group">
+            <label for="deadlineDate">Deadline Date:</label>
+            <input type="date" id="deadlineDate">
+        </div>
+
+        <div class="form-group">
+            <label for="deadlineTime">Deadline Time:</label>
+            <input type="time" id="deadlineTime">
+        </div>
+
+        <div class="form-group">
+            <label for="alarmSoundSelect">Alarm Sound:</label>
+            <select id="alarmSoundSelect">
+                <option value="beep">Beep</option>
+                <option value="tone">Tone</option>
+                </select>
+        </div>
+
+
+        <button id="addTimerBtn" class="btn-primary w-full">Add Assignment Timer</button>
+
+        <div class="timer-list" id="timerList">
+            </div>
+
+        <div class="alarm-controls" id="alarmControls">
+            <p class="mb-2 font-semibold">Assignment Deadline Reached!</p>
+            <button class="btn-snooze" id="snoozeAlarmBtn">Snooze (5 min)</button>
+            <button class="btn-stop" id="stopAlarmBtn">Stop Alarm</button>
+        </div>
+    </div>
+
+    <script>
+        const assignmentNameInput = document.getElementById('assignmentName');
+        const deadlineDateInput = document.getElementById('deadlineDate');
+        const deadlineTimeInput = document.getElementById('deadlineTime');
+        const alarmSoundSelect = document.getElementById('alarmSoundSelect'); // Get the select element
+        const addTimerBtn = document.getElementById('addTimerBtn');
+        const timerList = document.getElementById('timerList');
+        const alarmControls = document.getElementById('alarmControls'); // Alarm controls div
+        const snoozeAlarmBtn = document.getElementById('snoozeAlarmBtn'); // Snooze button
+        const stopAlarmBtn = document.getElementById('stopAlarmBtn'); // Stop button
+
+        const timers = []; // Array to store timer objects
+        let currentAlarmOscillator = null; // To keep track of the currently playing sound
+        let alarmingTimerId = null; // To keep track of which timer is alarming
+
+        // Create an AudioContext for generating sound
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+        // Function to play a selected alarm sound
+        function playAlarmSound(soundType) {
+            // Stop any currently playing alarm sound first
+            stopAlarmSound();
+
+            // Create an oscillator node
+            const oscillator = audioContext.createOscillator();
+            // Create a gain node to control volume
+            const gainNode = audioContext.createGain();
+
+            // Connect oscillator to gain node, and gain node to the audio context's destination (speakers)
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            // Set the type and frequency based on soundType
+            switch (soundType) {
+                case 'beep':
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(880, audioContext.currentTime); // Higher pitch beep
+                    gainNode.gain.setValueAtTime(0.7, audioContext.currentTime); // Slightly louder
+                    break;
+                case 'tone':
+                    oscillator.type = 'triangle';
+                    oscillator.frequency.setValueAtTime(440, audioContext.currentTime); // A4 note
+                    gainNode.gain.setValueAtTime(0.5, audioContext.currentTime); // Normal volume
+                    break;
+                // Add more cases for different sound types here
+                default: // Default to beep
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(880, audioContext.currentTime);
+                    gainNode.gain.setValueAtTime(0.7, audioContext.currentTime);
+            }
+
+
+            // Start the oscillator
+            oscillator.start();
+
+            // Store the oscillator so we can stop it later
+            currentAlarmOscillator = oscillator;
+        }
+
+        // Function to stop the currently playing alarm sound
+        function stopAlarmSound() {
+            if (currentAlarmOscillator) {
+                currentAlarmOscillator.stop();
+                currentAlarmOscillator = null; // Clear the reference
+            }
+             // Hide alarm controls when sound is stopped
+            alarmControls.style.display = 'none';
+            alarmingTimerId = null; // Clear alarming timer ID
+        }
+
+        // Function to add a new timer
+        function addTimer() {
+            const name = assignmentNameInput.value.trim();
+            const date = deadlineDateInput.value;
+            const time = deadlineTimeInput.value;
+
+            if (!name || !date || !time) {
+                alert('Please enter assignment name, date, and time.');
+                return;
+            }
+
+            const deadline = new Date(`${date}T${time}`);
+
+            if (isNaN(deadline.getTime())) {
+                alert('Invalid date or time entered.');
+                return;
+            }
+
+            const newTimer = {
+                id: Date.now(), // Unique ID for the timer
+                name: name,
+                deadline: deadline,
+                intervalId: null, // To store the interval ID for clearing
+                snoozeTimeoutId: null // To store the snooze timeout ID
+            };
+
+            timers.push(newTimer);
+            renderTimers(); // Update the display
+            startTimer(newTimer); // Start the countdown
+
+            // Clear input fields
+            assignmentNameInput.value = '';
+            deadlineDateInput.value = '';
+            deadlineTimeInput.value = '';
+        }
+
+        // Function to render the list of timers
+        function renderTimers() {
+            timerList.innerHTML = ''; // Clear current list
+            timers.forEach(timer => {
+                const timerElement = document.createElement('div');
+                timerElement.classList.add('timer-item');
+                timerElement.dataset.id = timer.id; // Store ID on the element
+
+                timerElement.innerHTML = `
+                    <div class="timer-details">
+                        <h3>${timer.name}</h3>
+                        <p>Deadline: ${timer.deadline.toLocaleString()}</p>
+                        <p class="time-remaining" id="time-remaining-${timer.id}">Calculating...</p>
+                    </div>
+                    <button class="btn-remove" onclick="removeTimer(${timer.id})">Remove</button>
+                `;
+
+                timerList.appendChild(timerElement);
+            });
+        }
+
+        // Function to start the countdown for a single timer
+        function startTimer(timer) {
+            const timerElement = document.getElementById(`time-remaining-${timer.id}`);
+
+            // Clear any existing interval for this timer to prevent duplicates
+            if (timer.intervalId) {
+                clearInterval(timer.intervalId);
+            }
+
+            // Update the countdown every second
+            timer.intervalId = setInterval(() => {
+                const now = new Date().getTime();
+                const distance = timer.deadline.getTime() - now;
+
+                if (distance < 0) {
+                    timerElement.textContent = 'EXPIRED!';
+                    timerElement.style.color = '#c53030'; // Keep red for expired
+                    clearInterval(timer.intervalId); // Stop the interval
+                    triggerAlarm(timer.id); // Trigger the alarm for this timer
+                    return;
+                }
+
+                const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+                timerElement.textContent = `${days}d ${hours}h ${minutes}m ${seconds}s`;
+                timerElement.style.color = '#c53030'; // Red for countdown
+            }, 1000); // Update every 1 second
+        }
+
+        // Function to trigger the alarm
+        function triggerAlarm(timerId) {
+            const selectedSound = alarmSoundSelect.value;
+            playAlarmSound(selectedSound); // Play the selected sound
+            alarmControls.style.display = 'block'; // Show alarm controls
+            alarmingTimerId = timerId; // Set the ID of the timer that is alarming
+        }
+
+        // Function to remove a timer
+        function removeTimer(id) {
+            const index = timers.findIndex(timer => timer.id === id);
+            if (index !== -1) {
+                clearInterval(timers[index].intervalId); // Stop the countdown interval
+                 // Clear any pending snooze timeout for this timer
+                if (timers[index].snoozeTimeoutId) {
+                    clearTimeout(timers[index].snoozeTimeoutId);
+                }
+                timers.splice(index, 1); // Remove from the array
+                renderTimers(); // Update the display
+
+                // If the timer being removed is the one currently alarming, stop the alarm
+                if (alarmingTimerId === id) {
+                    stopAlarmSound();
+                }
+            }
+        }
+
+        // Event listener for the Add Timer button
+        addTimerBtn.addEventListener('click', addTimer);
+
+        // Event listener for the Snooze button
+        snoozeAlarmBtn.addEventListener('click', () => {
+            if (alarmingTimerId !== null) {
+                stopAlarmSound(); // Stop the current sound
+                const timerToSnooze = timers.find(timer => timer.id === alarmingTimerId);
+                if (timerToSnooze) {
+                    // Set a new deadline for the snoozed timer (e.g., 5 minutes from now)
+                    const snoozeDuration = 5 * 60 * 1000; // 5 minutes in milliseconds
+                    timerToSnooze.deadline = new Date(new Date().getTime() + snoozeDuration);
+
+                    // Re-start the timer countdown with the new deadline
+                    // We need to clear the old interval and start a new one
+                    // The startTimer function already handles clearing the old interval
+                    startTimer(timerToSnooze);
+
+                     // Note: The countdown display might momentarily show a negative time
+                     // before the interval updates with the new deadline.
+                }
+            }
+        });
+
+        // Event listener for the Stop Alarm button
+        stopAlarmBtn.addEventListener('click', () => {
+            stopAlarmSound(); // Stop the current sound and hide controls
+        });
+
+
+        // Initial render (empty list)
+        renderTimers();
+
+    </script>
+</body>
+</html>
